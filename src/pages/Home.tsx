@@ -156,8 +156,17 @@ export default function Home() {
       </section>
 
       {/* Stats */}
-      <section className="py-12 bg-slate-50 border-b">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+      <section className="py-12 bg-slate-50 border-b relative overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=2070&auto=format&fit=crop" 
+            alt="University students"
+            className="w-full h-full object-cover opacity-10"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-50/90 via-blue-50/85 to-slate-50/90" />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {stats.map((stat) => (
               <Card key={stat.label} className="bg-white">
@@ -177,8 +186,17 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+      <section className="py-20 relative overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop" 
+            alt="Team collaboration"
+            className="w-full h-full object-cover opacity-8"
+          />
+          <div className="absolute inset-0 bg-white/95" />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">Comprehensive Features</h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
@@ -202,8 +220,17 @@ export default function Home() {
       </section>
 
       {/* Roles */}
-      <section className="py-20 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+      <section className="py-20 bg-slate-50 relative overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src="https://images.unsplash.com/photo-1531545514256-b1400bc00f31?q=80&w=2074&auto=format&fit=crop" 
+            alt="Students working together"
+            className="w-full h-full object-cover opacity-8"
+          />
+          <div className="absolute inset-0 bg-slate-50/95" />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">Built for Every Role</h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
@@ -267,8 +294,16 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-gradient-to-br from-blue-600 to-blue-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 text-center">
+      <section className="py-20 bg-gradient-to-br from-blue-600 to-blue-800 text-white relative overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?q=80&w=2049&auto=format&fit=crop" 
+            alt="Graduation celebration"
+            className="w-full h-full object-cover opacity-20 mix-blend-overlay"
+          />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 lg:px-8 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
           <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
             Join thousands of students, supervisors, and employers using InternTrack to streamline internship management.
