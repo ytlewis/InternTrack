@@ -82,9 +82,20 @@ export default function StudentInternships() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Browse Internships</h1>
-        <p className="text-slate-500">Explore approved internship opportunities from top employers</p>
+      <div className="relative">
+        {/* Background Image */}
+        <div className="absolute inset-0 -top-6 h-48 overflow-hidden rounded-lg">
+          <img 
+            src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?q=80&w=2070&auto=format&fit=crop" 
+            alt="Professional workspace"
+            className="w-full h-full object-cover opacity-10"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white" />
+        </div>
+        <div className="relative">
+          <h1 className="text-2xl font-bold text-slate-900">Browse Internships</h1>
+          <p className="text-slate-500">Explore approved internship opportunities from top employers</p>
+        </div>
       </div>
 
       <div className="relative">

@@ -48,8 +48,17 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 relative overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0">
+        <img 
+          src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?q=80&w=2070&auto=format&fit=crop" 
+          alt="Students studying"
+          className="w-full h-full object-cover opacity-15"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-50/90 via-white/85 to-blue-50/90" />
+      </div>
+      <Card className="w-full max-w-md relative z-10 shadow-xl">
         <CardHeader className="text-center">
           <CardTitle>
             {mode === "signup" ? "Create an account" : "Welcome back"}
