@@ -1,5 +1,5 @@
 import { getDb } from "./connection";
-import { internshipOpportunities } from "@db/schema";
+import { internshipOpportunities, employerProfiles } from "@db/schema";
 import { eq, desc } from "drizzle-orm";
 
 export async function findAllOpportunities() {
@@ -19,7 +19,7 @@ export async function findApprovedOpportunities() {
 
 export async function findOpportunitiesByEmployer(employerUserId: number) {
   const employerProfile = await getDb().query.employerProfiles.findFirst({
-    where: eq(internshipOpportunities.employerId, employerUserId),
+    where: eq(employerProfiles.userId, employerUserId),
   });
   if (!employerProfile) return [];
 
