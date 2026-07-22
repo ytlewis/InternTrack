@@ -53,12 +53,16 @@ export default function StudentInternships() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOpp, setSelectedOpp] = useState<Opportunity | null>(null);
   const [coverLetter, setCoverLetter] = useState("");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeUrl, setResumeUrl] = useState("");
 
   const applyMutation = trpc.application.create.useMutation({
     onSuccess: () => {
       toast.success("Application submitted successfully!");
       setSelectedOpp(null);
       setCoverLetter("");
+      setResumeFile(null);
+      setResumeUrl("");
       utils.application.listByStudent.invalidate();
     },
     onError: (err) => {
@@ -74,10 +78,40 @@ export default function StudentInternships() {
 
   const handleApply = () => {
     if (!selectedOpp) return;
+    
+    // For now, use the resume URL from cloud storage or file name
+    let finalResumeUrl = resumeUrl;
+    if (resumeFile) {
+      // In a real app, you'd upload the file to cloud storage here
+      // For now, just use the file name as a placeholder
+      finalResumeUrl = `pending-upload/${resumeFile.name}`;
+      toast.info("Resume will be uploaded: " + resumeFile.name);
+    }
+    
     applyMutation.mutate({
       opportunityId: selectedOpp.id,
       coverLetter: coverLetter || undefined,
+      resumeUrl: finalResumeUrl || undefined,
     });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check file type
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Please upload a PDF or Word document");
+        return;
+      }
+      // Check file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size must be less than 5MB");
+        return;
+      }
+      setResumeFile(file);
+      setResumeUrl(""); // Clear URL if file is selected
+    }
   };
 
   return (
@@ -172,8 +206,45 @@ export default function StudentInternships() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Resume</Label>
-                          <p className="text-sm text-slate-500">Resume upload feature coming soon. For now, include relevant details in your cover letter.</p>
+                          <Label htmlFor="resume">Resume/CV</Label>
+                          <div className="space-y-3">
+                            <div>
+                              <Input
+                                id="resume"
+                                type="file"
+                                accept=".pdf,.doc,.docx"
+                                onChange={handleFileChange}
+                                className="cursor-pointer"
+                              />
+                              {resumeFile && (
+                                <p className="text-sm text-green-600 mt-1">
+                                  Selected: {resumeFile.name}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-px bg-slate-200" />
+                              <span className="text-xs text-slate-400">OR</span>
+                              <div className="flex-1 h-px bg-slate-200" />
+                            </div>
+                            <div>
+                              <Label htmlFor="resumeUrl" className="text-sm">Cloud Storage URL</Label>
+                              <Input
+                                id="resumeUrl"
+                                type="url"
+                                placeholder="https://drive.google.com/... or https://dropbox.com/..."
+                                value={resumeUrl}
+                                onChange={(e) => {
+                                  setResumeUrl(e.target.value);
+                                  if (e.target.value) setResumeFile(null);
+                                }}
+                                disabled={!!resumeFile}
+                              />
+                              <p className="text-xs text-slate-500 mt-1">
+                                Share link from Google Drive, Dropbox, OneDrive, etc.
+                              </p>
+                            </div>
+                          </div>
                         </div>
                         <Button
                           className="w-full gap-2"

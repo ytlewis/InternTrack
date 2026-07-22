@@ -18,26 +18,21 @@ export default function EmployerApplications() {
   const [searchParams] = useSearchParams();
   const opportunityId = searchParams.get("opportunityId");
 
-  const { data: opportunities } = trpc.opportunity.listByEmployer.useQuery(
-    { employerUserId: user?.id || 0 },
+  const { data: allApplications, isLoading } = trpc.application.listByEmployer.useQuery(
+    undefined,
     { enabled: !!user?.id && user?.role === "employer" }
   );
-
-  const { data: allApplications, isLoading } = trpc.application.list.useQuery();
 
   const utils = trpc.useUtils();
   const updateStatus = trpc.application.updateStatus.useMutation({
     onSuccess: () => {
       toast.success("Application status updated!");
-      utils.application.list.invalidate();
+      utils.application.listByEmployer.invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
 
-  const employerOppIds = opportunities?.map((o) => o.id) || [];
-
   const filteredApplications = allApplications?.filter((app) => {
-    if (!employerOppIds.includes(app.opportunityId)) return false;
     if (opportunityId && app.opportunityId !== parseInt(opportunityId)) return false;
     return true;
   });
@@ -86,9 +81,25 @@ export default function EmployerApplications() {
                         Applied on {new Date(app.appliedAt).toLocaleDateString()}
                       </p>
                       {app.coverLetter && (
-                        <div className="bg-slate-50 rounded-lg p-3">
+                        <div className="bg-slate-50 rounded-lg p-3 mb-2">
                           <p className="text-sm font-medium text-slate-700 mb-1">Cover Letter:</p>
                           <p className="text-sm text-slate-600">{app.coverLetter}</p>
+                        </div>
+                      )}
+                      {app.resumeUrl && (
+                        <div className="bg-blue-50 rounded-lg p-3">
+                          <p className="text-sm font-medium text-slate-700 mb-1">Resume/CV:</p>
+                          <a 
+                            href={app.resumeUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+                          >
+                            View Resume
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
                         </div>
                       )}
                     </div>

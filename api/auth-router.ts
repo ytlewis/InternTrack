@@ -5,7 +5,7 @@ import { Session } from "@contracts/constants";
 import { getSessionCookieOptions } from "./lib/cookies";
 import { createRouter, authedQuery, publicQuery } from "./middleware";
 import { TRPCError } from "@trpc/server";
-import { createUser, findUserByEmail, createEmployerProfile } from "./queries/users";
+import { createUser, findUserByEmail, createEmployerProfile, createStudentProfile, createSupervisorProfile } from "./queries/users";
 import { signSessionToken } from "./kimi/session";
 import { env } from "./lib/env";
 
@@ -103,28 +103,47 @@ export const authRouter = createRouter({
             role: userRole,
           });
           
-          // Auto-create employer profile in database if role is employer
-          if (userRole === "employer" && dbUser?.id) {
+          // Auto-create role-specific profile in database
+          if (dbUser?.id) {
             try {
-              await createEmployerProfile({
-                userId: dbUser.id,
-                companyName: input.name || "My Company",
-                contactPerson: input.name || null,
-              });
-              console.log("[auth.signup] Employer profile created for user:", dbUser.id);
+              if (userRole === "employer") {
+                await createEmployerProfile({
+                  userId: dbUser.id,
+                  companyName: input.name || "My Company",
+                  contactPerson: input.name || null,
+                });
+                console.log("[auth.signup] Employer profile created for user:", dbUser.id);
+              } else if (userRole === "student") {
+                await createStudentProfile({
+                  userId: dbUser.id,
+                  studentId: `STU${dbUser.id.toString().padStart(6, '0')}`,
+                  program: "Not Set",
+                  yearOfStudy: 1,
+                  institution: "Not Set",
+                });
+                console.log("[auth.signup] Student profile created for user:", dbUser.id);
+              } else if (userRole === "supervisor") {
+                await createSupervisorProfile({
+                  userId: dbUser.id,
+                  department: "Not Set",
+                });
+                console.log("[auth.signup] Supervisor profile created for user:", dbUser.id);
+              }
             } catch (profileErr) {
-              console.warn("[auth.signup] Employer profile creation failed:", profileErr);
-              // Still create in-memory fallback
-              const employerProfile: StoredEmployerProfile = {
-                id: nextEmployerProfileId++,
-                userId: dbUser.id,
-                companyName: input.name || "My Company",
-                companyAddress: null,
-                contactPerson: input.name,
-                phone: null,
-                industry: null,
-              };
-              employerProfileStore.set(dbUser.id, employerProfile);
+              console.warn("[auth.signup] Profile creation failed:", profileErr);
+              // Still create in-memory fallback for employer
+              if (userRole === "employer") {
+                const employerProfile: StoredEmployerProfile = {
+                  id: nextEmployerProfileId++,
+                  userId: dbUser.id,
+                  companyName: input.name || "My Company",
+                  companyAddress: null,
+                  contactPerson: input.name,
+                  phone: null,
+                  industry: null,
+                };
+                employerProfileStore.set(dbUser.id, employerProfile);
+              }
             }
           }
           

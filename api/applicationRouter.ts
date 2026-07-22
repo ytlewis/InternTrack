@@ -9,8 +9,11 @@ import {
   updateApplicationStatus,
   deleteApplication,
 } from "./queries/applications";
-import { findStudentProfileByUserId } from "./queries/users";
+import { findStudentProfileByUserId, findEmployerProfileByUserId } from "./queries/users";
 import { findOpportunityById } from "./queries/opportunities";
+import { getDb } from "./queries/connection";
+import { applications, internshipOpportunities } from "@db/schema";
+import { eq, desc, inArray } from "drizzle-orm";
 
 export const applicationRouter = createRouter({
   list: adminQuery.query(async () => {
@@ -30,6 +33,54 @@ export const applicationRouter = createRouter({
     .query(async ({ input }) => {
       return findApplicationsByOpportunity(input.opportunityId);
     }),
+
+  listByEmployer: authedQuery.query(async ({ ctx }) => {
+    try {
+      const employerProfile = await findEmployerProfileByUserId(ctx.user.id);
+      if (!employerProfile) return [];
+      
+      // Get all opportunities by this employer
+      const opportunities = await getDb().query.internshipOpportunities.findMany({
+        where: eq(internshipOpportunities.employerId, employerProfile.id),
+      });
+      
+      if (opportunities.length === 0) return [];
+      
+      const opportunityIds = opportunities.map(o => o.id);
+      
+      // Get all applications for these opportunities
+      const apps = await getDb().query.applications.findMany({
+        where: inArray(applications.opportunityId, opportunityIds),
+        orderBy: [desc(applications.appliedAt)],
+      });
+      
+      if (apps.length === 0) return [];
+      
+      // Manually fetch related data
+      const students = await getDb().query.studentProfiles.findMany();
+      const allOpportunities = await getDb().query.internshipOpportunities.findMany();
+      const allUsers = await getDb().query.users.findMany();
+      
+      // Combine data manually
+      return apps.map(app => {
+        const student = students.find(s => s.id === app.studentId);
+        const studentUser = student ? allUsers.find(u => u.id === student.userId) : null;
+        const opportunity = allOpportunities.find(o => o.id === app.opportunityId);
+        
+        return {
+          ...app,
+          student: student ? {
+            ...student,
+            user: studentUser || { id: 0, name: null, email: null },
+          } : null,
+          opportunity: opportunity || null,
+        };
+      });
+    } catch (err) {
+      console.error("[application.listByEmployer] ERROR:", err);
+      return [];
+    }
+  }),
 
   byId: authedQuery
     .input(z.object({ id: z.number() }))
