@@ -1,5 +1,5 @@
 import { getDb } from "./connection";
-import { applications } from "@db/schema";
+import { applications, internshipOpportunities, employerProfiles, users, placements, studentProfiles } from "@db/schema";
 import { eq, desc } from "drizzle-orm";
 
 export async function findAllApplications() {
@@ -13,13 +13,40 @@ export async function findAllApplications() {
 }
 
 export async function findApplicationsByStudent(studentProfileId: number) {
-  return getDb().query.applications.findMany({
+  // Get applications without nested relations
+  const apps = await getDb().query.applications.findMany({
     where: eq(applications.studentId, studentProfileId),
-    with: {
-      opportunity: { with: { employer: { with: { user: true } } } },
-      placement: true,
-    },
     orderBy: [desc(applications.appliedAt)],
+  });
+  
+  if (apps.length === 0) return [];
+  
+  // Manually fetch related data
+  const opportunityIds = [...new Set(apps.map(a => a.opportunityId))];
+  const opportunities = await getDb().query.internshipOpportunities.findMany();
+  const employerIds = [...new Set(opportunities.map(o => o.employerId))];
+  const employers = await getDb().query.employerProfiles.findMany();
+  const users = await getDb().query.users.findMany();
+  const placements = await getDb().query.placements.findMany();
+  
+  // Combine data manually
+  return apps.map(app => {
+    const opportunity = opportunities.find(o => o.id === app.opportunityId);
+    const employer = opportunity ? employers.find(e => e.id === opportunity.employerId) : null;
+    const user = employer ? users.find(u => u.id === employer.userId) : null;
+    const placement = placements.find(p => p.applicationId === app.id);
+    
+    return {
+      ...app,
+      opportunity: opportunity ? {
+        ...opportunity,
+        employer: employer ? {
+          ...employer,
+          user: user || null,
+        } : null,
+      } : null,
+      placement: placement || null,
+    };
   });
 }
 
@@ -63,7 +90,11 @@ export async function createApplication(data: {
   
   // For MariaDB/MySQL, get the last inserted ID
   const insertId = Number(result[0].insertId);
-  return findApplicationById(insertId);
+  
+  // Return simple application without nested relations to avoid LATERAL join
+  return getDb().query.applications.findFirst({
+    where: eq(applications.id, insertId),
+  });
 }
 
 export async function updateApplicationStatus(id: number, status: "pending" | "shortlisted" | "accepted" | "rejected") {

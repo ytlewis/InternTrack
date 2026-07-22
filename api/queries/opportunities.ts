@@ -1,19 +1,67 @@
 import { getDb } from "./connection";
-import { internshipOpportunities, employerProfiles } from "@db/schema";
+import { internshipOpportunities, employerProfiles, users } from "@db/schema";
 import { eq, desc } from "drizzle-orm";
 
 export async function findAllOpportunities() {
-  return getDb().query.internshipOpportunities.findMany({
-    with: { employer: { with: { user: true } } },
+  // Fetch opportunities without nested relations to avoid LATERAL join in MariaDB
+  const opportunities = await getDb().query.internshipOpportunities.findMany({
     orderBy: [desc(internshipOpportunities.createdAt)],
+  });
+  
+  // Manually fetch employer data if needed
+  const employerIds = [...new Set(opportunities.map(o => o.employerId))];
+  const employers = await getDb().query.employerProfiles.findMany({
+    where: employerIds.length > 0 ? 
+      employerProfiles.id in employerIds.map(id => id) : undefined,
+  });
+  
+  const userIds = [...new Set(employers.map(e => e.userId))];
+  const users = await getDb().query.users.findMany({
+    where: userIds.length > 0 ? 
+      users.id in userIds.map(id => id) : undefined,
+  });
+  
+  // Combine data manually
+  return opportunities.map(opp => {
+    const employer = employers.find(e => e.id === opp.employerId);
+    const user = employer ? users.find(u => u.id === employer.userId) : null;
+    return {
+      ...opp,
+      employer: employer ? {
+        ...employer,
+        user: user || null,
+      } : null,
+    };
   });
 }
 
 export async function findApprovedOpportunities() {
-  return getDb().query.internshipOpportunities.findMany({
+  // Fetch approved opportunities without nested relations
+  const opportunities = await getDb().query.internshipOpportunities.findMany({
     where: eq(internshipOpportunities.status, "approved"),
-    with: { employer: { with: { user: true } } },
     orderBy: [desc(internshipOpportunities.createdAt)],
+  });
+  
+  if (opportunities.length === 0) return [];
+  
+  // Manually fetch employer data
+  const employerIds = [...new Set(opportunities.map(o => o.employerId))];
+  const employers = await getDb().query.employerProfiles.findMany();
+  
+  const userIds = [...new Set(employers.map(e => e.userId))];
+  const users = await getDb().query.users.findMany();
+  
+  // Combine data manually
+  return opportunities.map(opp => {
+    const employer = employers.find(e => e.id === opp.employerId);
+    const user = employer ? users.find(u => u.id === employer.userId) : null;
+    return {
+      ...opp,
+      employer: employer ? {
+        ...employer,
+        user: user || null,
+      } : null,
+    };
   });
 }
 
