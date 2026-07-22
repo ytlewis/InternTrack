@@ -18,12 +18,20 @@ export default function AdminLogin() {
       if (result?.user?.role === "admin") {
         window.location.href = "/admin/dashboard";
       } else {
-        alert("Access denied. Admin credentials required.");
+        alert("Access denied. This account is not registered as an administrator.");
       }
     } catch (err: unknown) {
       console.error("Admin login failed", err);
       const error = err as { data?: { message?: string }; message?: string };
-      const msg = error?.data?.message || error?.message || "Admin login failed";
+      let msg = error?.data?.message || error?.message || "Admin login failed";
+      
+      // Provide more helpful error messages
+      if (msg.includes("No account found")) {
+        msg = "Admin account not found. Please contact the system administrator.";
+      } else if (msg.includes("not admin")) {
+        msg = "This email is not registered as an administrator.";
+      }
+      
       alert(msg);
     }
   }
@@ -58,7 +66,7 @@ export default function AdminLogin() {
               </label>
               <Input
                 type="email"
-                placeholder="admin@interntrack.com"
+                placeholder="Enter your admin email"
                 className="bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

@@ -178,7 +178,7 @@ export const authRouter = createRouter({
     .input(
       z.object({
         email: z.string().email(),
-        role: z.enum(["student", "supervisor", "employer"]).optional(),
+        role: z.enum(["student", "supervisor", "employer", "admin"]).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
