@@ -437,6 +437,15 @@ export default function Home() {
           <p className="text-xs mt-2 text-slate-500">
             &copy; {new Date().getFullYear()} InternTrack. All rights reserved.
           </p>
+          <div className="mt-4">
+            <Link 
+              to="/admin" 
+              className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-blue-400 transition-colors"
+            >
+              <Shield className="w-3 h-3" />
+              Admin Access
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
