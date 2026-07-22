@@ -10,6 +10,9 @@ import {
   deleteOpportunity,
 } from "./queries/opportunities";
 import { findEmployerProfileByUserId } from "./queries/users";
+import { getDb } from "./queries/connection";
+import { internshipOpportunities } from "@db/schema";
+import { eq } from "drizzle-orm";
 
 export const opportunityRouter = createRouter({
   list: publicQuery.query(async () => {
@@ -91,22 +94,45 @@ export const opportunityRouter = createRouter({
   deleteByEmployer: authedQuery
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      // Verify employer owns this opportunity
-      const employerProfile = await findEmployerProfileByUserId(ctx.user.id);
-      if (!employerProfile) {
-        throw new Error("Employer profile not found");
+      try {
+        console.log("[opportunity.deleteByEmployer] User ID:", ctx.user.id);
+        console.log("[opportunity.deleteByEmployer] Opportunity ID:", input.id);
+        
+        // Verify employer owns this opportunity
+        const employerProfile = await findEmployerProfileByUserId(ctx.user.id);
+        console.log("[opportunity.deleteByEmployer] Employer profile:", employerProfile);
+        
+        if (!employerProfile) {
+          throw new Error("Employer profile not found");
+        }
+        
+        // Get opportunity without nested relations to avoid LATERAL join issue in MariaDB
+        const opportunity = await getDb().query.internshipOpportunities.findFirst({
+          where: eq(internshipOpportunities.id, input.id),
+        });
+        console.log("[opportunity.deleteByEmployer] Opportunity:", opportunity);
+        
+        if (!opportunity) {
+          throw new Error("Opportunity not found");
+        }
+        
+        if (opportunity.employerId !== employerProfile.id) {
+          console.error("[opportunity.deleteByEmployer] Ownership mismatch:", {
+            opportunityEmployerId: opportunity.employerId,
+            profileId: employerProfile.id,
+          });
+          throw new Error("You can only delete your own opportunities");
+        }
+        
+        console.log("[opportunity.deleteByEmployer] Deleting opportunity...");
+        const result = await deleteOpportunity(input.id);
+        console.log("[opportunity.deleteByEmployer] Delete result:", result);
+        
+        return result;
+      } catch (err) {
+        console.error("[opportunity.deleteByEmployer] ERROR:", err);
+        throw err;
       }
-      
-      const opportunity = await findOpportunityById(input.id);
-      if (!opportunity) {
-        throw new Error("Opportunity not found");
-      }
-      
-      if (opportunity.employerId !== employerProfile.id) {
-        throw new Error("You can only delete your own opportunities");
-      }
-      
-      return deleteOpportunity(input.id);
     }),
 
   delete: adminQuery
