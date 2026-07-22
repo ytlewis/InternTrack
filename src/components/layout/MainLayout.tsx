@@ -45,6 +45,7 @@ const navItems: NavItem[] = [
   { label: "User Management", path: "/admin/users", icon: <Users className="w-5 h-5" />, roles: ["admin"] },
   { label: "Opportunities", path: "/admin/opportunities", icon: <Briefcase className="w-5 h-5" />, roles: ["admin"] },
   { label: "All Applications", path: "/admin/applications", icon: <ClipboardList className="w-5 h-5" />, roles: ["admin"] },
+  { label: "Placements", path: "/admin/placements", icon: <GraduationCap className="w-5 h-5" />, roles: ["admin"] },
   { label: "Reports", path: "/admin/reports", icon: <BarChart3 className="w-5 h-5" />, roles: ["admin"] },
   { label: "Settings", path: "/settings", icon: <Settings className="w-5 h-5" />, roles: ["student", "supervisor", "employer", "admin"] },
 ];

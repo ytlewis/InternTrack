@@ -31,6 +31,7 @@ import AdminUsers from "./pages/admin/Users";
 import AdminOpportunities from "./pages/admin/Opportunities";
 import AdminApplications from "./pages/admin/Applications";
 import AdminReports from "./pages/admin/Reports";
+import AdminPlacements from "./pages/admin/Placements";
 
 export default function App() {
   return (
@@ -171,6 +172,14 @@ export default function App() {
                   element={
                     <RoleGuard allowedRoles={["admin"]}>
                       <AdminReports />
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path="/admin/placements"
+                  element={
+                    <RoleGuard allowedRoles={["admin"]}>
+                      <AdminPlacements />
                     </RoleGuard>
                   }
                 />

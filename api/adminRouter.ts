@@ -10,7 +10,7 @@ import {
 } from "./queries/users";
 import { findAllOpportunities } from "./queries/opportunities";
 import { findAllApplications } from "./queries/applications";
-import { findAllPlacements } from "./queries/placements";
+import { findAllPlacements, findPlacementsByStudentId, updatePlacementSupervisor } from "./queries/placements";
 
 export const adminRouter = createRouter({
   stats: adminQuery.query(async () => {
@@ -69,5 +69,26 @@ export const adminRouter = createRouter({
     .input(z.object({ userId: z.number() }))
     .mutation(async ({ input }) => {
       return approveUser(input.userId);
+    }),
+
+  listPlacements: adminQuery.query(async () => {
+    return findAllPlacements();
+  }),
+
+  listStudentPlacements: adminQuery
+    .input(z.object({ studentProfileId: z.number() }))
+    .query(async ({ input }) => {
+      return findPlacementsByStudentId(input.studentProfileId);
+    }),
+
+  assignSupervisor: adminQuery
+    .input(
+      z.object({
+        placementId: z.number(),
+        supervisorId: z.number().nullable(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return updatePlacementSupervisor(input.placementId, input.supervisorId);
     }),
 });

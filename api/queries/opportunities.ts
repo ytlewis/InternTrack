@@ -1,6 +1,6 @@
 import { getDb } from "./connection";
 import { internshipOpportunities, employerProfiles, users } from "@db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, inArray } from "drizzle-orm";
 
 export async function findAllOpportunities() {
   // Fetch opportunities without nested relations to avoid LATERAL join in MariaDB
@@ -8,23 +8,16 @@ export async function findAllOpportunities() {
     orderBy: [desc(internshipOpportunities.createdAt)],
   });
   
-  // Manually fetch employer data if needed
-  const employerIds = [...new Set(opportunities.map(o => o.employerId))];
-  const employers = await getDb().query.employerProfiles.findMany({
-    where: employerIds.length > 0 ? 
-      employerProfiles.id in employerIds.map(id => id) : undefined,
-  });
+  if (opportunities.length === 0) return [];
   
-  const userIds = [...new Set(employers.map(e => e.userId))];
-  const users = await getDb().query.users.findMany({
-    where: userIds.length > 0 ? 
-      users.id in userIds.map(id => id) : undefined,
-  });
+  // Manually fetch all employer data
+  const employers = await getDb().query.employerProfiles.findMany();
+  const allUsers = await getDb().query.users.findMany();
   
   // Combine data manually
   return opportunities.map(opp => {
     const employer = employers.find(e => e.id === opp.employerId);
-    const user = employer ? users.find(u => u.id === employer.userId) : null;
+    const user = employer ? allUsers.find(u => u.id === employer.userId) : null;
     return {
       ...opp,
       employer: employer ? {
@@ -129,11 +122,27 @@ export async function createOpportunity(data: {
 }
 
 export async function updateOpportunityStatus(id: number, status: "pending" | "approved" | "rejected") {
-  await getDb()
-    .update(internshipOpportunities)
-    .set({ status })
-    .where(eq(internshipOpportunities.id, id));
-  return findOpportunityById(id);
+  try {
+    console.log("[updateOpportunityStatus] Updating opportunity:", id, "to status:", status);
+    
+    await getDb()
+      .update(internshipOpportunities)
+      .set({ status })
+      .where(eq(internshipOpportunities.id, id));
+    
+    console.log("[updateOpportunityStatus] Update successful");
+    
+    // Return opportunity without nested relations to avoid LATERAL join issues in MariaDB
+    const opportunity = await getDb().query.internshipOpportunities.findFirst({
+      where: eq(internshipOpportunities.id, id),
+    });
+    
+    console.log("[updateOpportunityStatus] Retrieved updated opportunity:", opportunity);
+    return opportunity;
+  } catch (err) {
+    console.error("[updateOpportunityStatus] ERROR:", err);
+    throw err;
+  }
 }
 
 export async function deleteOpportunity(id: number) {

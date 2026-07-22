@@ -73,13 +73,13 @@ export default function AdminOpportunities() {
                       </div>
                       <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
                         <Building2 className="w-4 h-4" />
-                        <span>{opp.employer.companyName}</span>
+                        <span>{opp.employer?.companyName || opp.employer?.user?.name || "Unknown Company"}</span>
                         <span className="text-slate-300">|</span>
                         <MapPin className="w-4 h-4" />
                         <span>{opp.location || "Remote"}</span>
                         <span className="text-slate-300">|</span>
                         <Clock className="w-4 h-4" />
-                        <span>{opp.duration}</span>
+                        <span>{opp.duration || "Not specified"}</span>
                         <span className="text-slate-300">|</span>
                         <Users className="w-4 h-4" />
                         <span>{opp.slotsAvailable} slots</span>

@@ -108,6 +108,13 @@ export default function AdminDashboard() {
       badge: stats?.pendingApprovals,
     },
     {
+      title: "Manage Placements",
+      description: "Assign supervisors to students",
+      icon: <GraduationCap className="w-5 h-5" />,
+      link: "/admin/placements",
+      color: "bg-teal-50 text-teal-700 hover:bg-teal-100",
+    },
+    {
       title: "Placement Reports",
       description: "Review and manage placement reports",
       icon: <FileText className="w-5 h-5" />,
@@ -169,7 +176,7 @@ export default function AdminDashboard() {
           {/* Quick Actions */}
           <div>
             <h2 className="text-xl font-semibold text-slate-900 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               {quickActions.map((action, index) => (
                 <Link key={index} to={action.link}>
                   <Card className="hover:shadow-md transition-all h-full">
