@@ -45,22 +45,39 @@ export async function createOpportunity(data: {
   duration?: string;
   slotsAvailable?: number;
 }) {
-  const result = await getDb()
-    .insert(internshipOpportunities)
-    .values({
-      employerId: data.employerId,
-      title: data.title,
-      description: data.description,
-      requirements: data.requirements ?? null,
-      location: data.location ?? null,
-      duration: data.duration ?? null,
-      slotsAvailable: data.slotsAvailable ?? 1,
-      status: "pending",
+  try {
+    console.log("[createOpportunity] Starting with data:", data);
+    
+    const result = await getDb()
+      .insert(internshipOpportunities)
+      .values({
+        employerId: data.employerId,
+        title: data.title,
+        description: data.description,
+        requirements: data.requirements ?? null,
+        location: data.location ?? null,
+        duration: data.duration ?? null,
+        slotsAvailable: data.slotsAvailable ?? 1,
+        status: "pending",
+      });
+    
+    console.log("[createOpportunity] Insert result:", result);
+    
+    // For MariaDB/MySQL, get the last inserted ID
+    const insertId = Number(result[0].insertId);
+    console.log("[createOpportunity] Insert ID:", insertId);
+    
+    // Return simple opportunity without nested relations to avoid LATERAL join issues in MariaDB
+    const opportunity = await getDb().query.internshipOpportunities.findFirst({
+      where: eq(internshipOpportunities.id, insertId),
     });
-  
-  // For MariaDB/MySQL, get the last inserted ID
-  const insertId = Number(result[0].insertId);
-  return findOpportunityById(insertId);
+    console.log("[createOpportunity] Retrieved opportunity:", opportunity);
+    
+    return opportunity;
+  } catch (err) {
+    console.error("[createOpportunity] ERROR:", err);
+    throw err;
+  }
 }
 
 export async function updateOpportunityStatus(id: number, status: "pending" | "approved" | "rejected") {

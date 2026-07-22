@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
+import { toast } from "sonner";
 import {
   Briefcase,
   MapPin,
@@ -11,15 +12,31 @@ import {
   Users,
   Plus,
   ArrowRight,
+  Trash2,
 } from "lucide-react";
 
 export default function EmployerOpportunities() {
   const { user } = useAuth();
+  const utils = trpc.useUtils();
 
   const { data: opportunities, isLoading } = trpc.opportunity.listByEmployer.useQuery(
     { employerUserId: user?.id || 0 },
     { enabled: !!user?.id && user?.role === "employer" }
   );
+
+  const deleteOpp = trpc.opportunity.deleteByEmployer.useMutation({
+    onSuccess: () => {
+      toast.success("Opportunity deleted successfully");
+      utils.opportunity.listByEmployer.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleDelete = (id: number, title: string) => {
+    if (confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+      deleteOpp.mutate({ id });
+    }
+  };
 
   const statusMap: Record<string, { label: string; className: string }> = {
     approved: { label: "Approved", className: "bg-green-100 text-green-700" },
@@ -76,11 +93,23 @@ export default function EmployerOpportunities() {
                         </div>
                       )}
                     </div>
-                    <Link to={`/employer/applications?opportunityId=${opp.id}`}>
-                      <Button variant="outline" size="sm" className="gap-1 shrink-0">
-                        View Applications <ArrowRight className="w-3 h-3" />
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Link to={`/employer/applications?opportunityId=${opp.id}`}>
+                        <Button variant="outline" size="sm" className="gap-1">
+                          View Applications <ArrowRight className="w-3 h-3" />
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1 text-red-600 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => handleDelete(opp.id, opp.title)}
+                        disabled={deleteOpp.isPending}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Delete
                       </Button>
-                    </Link>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
