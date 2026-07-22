@@ -25,6 +25,7 @@ import EmployerNewOpportunity from "./pages/employer/NewOpportunity";
 import EmployerApplications from "./pages/employer/Applications";
 
 // Admin pages
+import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
 import AdminOpportunities from "./pages/admin/Opportunities";
 import AdminApplications from "./pages/admin/Applications";
@@ -135,7 +136,7 @@ export default function App() {
                   path="/admin/dashboard"
                   element={
                     <RoleGuard allowedRoles={["admin"]}>
-                      <Dashboard />
+                      <AdminDashboard />
                     </RoleGuard>
                   }
                 />

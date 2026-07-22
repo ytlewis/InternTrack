@@ -3,12 +3,44 @@ import { applications, internshipOpportunities, employerProfiles, users, placeme
 import { eq, desc } from "drizzle-orm";
 
 export async function findAllApplications() {
-  return getDb().query.applications.findMany({
-    with: {
-      student: { with: { user: true } },
-      opportunity: { with: { employer: { with: { user: true } } } },
-    },
+  // Get applications without nested relations
+  const apps = await getDb().query.applications.findMany({
     orderBy: [desc(applications.appliedAt)],
+  });
+  
+  if (apps.length === 0) return [];
+  
+  // Manually fetch related data
+  const studentIds = [...new Set(apps.map(a => a.studentId))];
+  const opportunityIds = [...new Set(apps.map(a => a.opportunityId))];
+  
+  const students = await getDb().query.studentProfiles.findMany();
+  const opportunities = await getDb().query.internshipOpportunities.findMany();
+  const employers = await getDb().query.employerProfiles.findMany();
+  const users = await getDb().query.users.findMany();
+  
+  // Combine data manually
+  return apps.map(app => {
+    const student = students.find(s => s.id === app.studentId);
+    const studentUser = student ? users.find(u => u.id === student.userId) : null;
+    const opportunity = opportunities.find(o => o.id === app.opportunityId);
+    const employer = opportunity ? employers.find(e => e.id === opportunity.employerId) : null;
+    const employerUser = employer ? users.find(u => u.id === employer.userId) : null;
+    
+    return {
+      ...app,
+      student: student ? {
+        ...student,
+        user: studentUser || null,
+      } : null,
+      opportunity: opportunity ? {
+        ...opportunity,
+        employer: employer ? {
+          ...employer,
+          user: employerUser || null,
+        } : null,
+      } : null,
+    };
   });
 }
 

@@ -31,7 +31,8 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard className="w-5 h-5" />, roles: ["student", "supervisor", "employer", "admin"] },
+  { label: "Dashboard", path: "/admin/dashboard", icon: <LayoutDashboard className="w-5 h-5" />, roles: ["admin"] },
+  { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard className="w-5 h-5" />, roles: ["student", "supervisor", "employer"] },
   { label: "Browse Internships", path: "/student/internships", icon: <Briefcase className="w-5 h-5" />, roles: ["student"] },
   { label: "My Applications", path: "/student/applications", icon: <ClipboardList className="w-5 h-5" />, roles: ["student"] },
   { label: "Reports", path: "/student/reports", icon: <FileText className="w-5 h-5" />, roles: ["student", "supervisor"] },
