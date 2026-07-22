@@ -23,7 +23,7 @@ export async function upsertUser(data: {
       .where(eq(users.id, existing.id));
     return findUserByUnionId(data.unionId);
   }
-  const [{ id }] = await getDb()
+  const result = await getDb()
     .insert(users)
     .values({
       unionId: data.unionId,
@@ -31,9 +31,9 @@ export async function upsertUser(data: {
       email: data.email ?? null,
       avatar: data.avatar ?? null,
       lastSignInAt: data.lastSignInAt ?? new Date(),
-    })
-    .$returningId();
-  return findUserById(id);
+    });
+  const insertId = Number(result[0].insertId);
+  return findUserById(insertId);
 }
 
 export async function findUserByUnionId(unionId: string) {
@@ -61,7 +61,7 @@ export async function createUser(data: {
   avatar?: string;
   role?: "student" | "supervisor" | "employer" | "admin";
 }) {
-  const [{ id }] = await getDb()
+  const result = await getDb()
     .insert(users)
     .values({
       unionId: data.unionId,
@@ -69,9 +69,9 @@ export async function createUser(data: {
       email: data.email ?? null,
       avatar: data.avatar ?? null,
       role: data.role ?? "student",
-    })
-    .$returningId();
-  return findUserById(id);
+    });
+  const insertId = Number(result[0].insertId);
+  return findUserById(insertId);
 }
 
 export async function updateUserRole(userId: number, role: string) {

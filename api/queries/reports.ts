@@ -22,7 +22,7 @@ export async function createReport(data: {
   content: string;
   fileUrl?: string;
 }) {
-  const [{ id }] = await getDb()
+  const result = await getDb()
     .insert(reports)
     .values({
       placementId: data.placementId,
@@ -31,9 +31,9 @@ export async function createReport(data: {
       content: data.content,
       fileUrl: data.fileUrl ?? null,
       status: "pending",
-    })
-    .$returningId();
-  return findReportById(id);
+    });
+  const insertId = Number(result[0].insertId);
+  return findReportById(insertId);
 }
 
 export async function updateReportFeedback(id: number, feedback: string, status: "pending" | "approved" | "rejected") {

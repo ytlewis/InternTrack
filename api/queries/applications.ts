@@ -50,7 +50,7 @@ export async function createApplication(data: {
   resumeUrl?: string;
   transcriptUrl?: string;
 }) {
-  const [{ id }] = await getDb()
+  const result = await getDb()
     .insert(applications)
     .values({
       studentId: data.studentId,
@@ -59,9 +59,11 @@ export async function createApplication(data: {
       resumeUrl: data.resumeUrl ?? null,
       transcriptUrl: data.transcriptUrl ?? null,
       status: "pending",
-    })
-    .$returningId();
-  return findApplicationById(id);
+    });
+  
+  // For MariaDB/MySQL, get the last inserted ID
+  const insertId = Number(result[0].insertId);
+  return findApplicationById(insertId);
 }
 
 export async function updateApplicationStatus(id: number, status: "pending" | "shortlisted" | "accepted" | "rejected") {

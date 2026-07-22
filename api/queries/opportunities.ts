@@ -45,7 +45,7 @@ export async function createOpportunity(data: {
   duration?: string;
   slotsAvailable?: number;
 }) {
-  const [{ id }] = await getDb()
+  const result = await getDb()
     .insert(internshipOpportunities)
     .values({
       employerId: data.employerId,
@@ -56,9 +56,11 @@ export async function createOpportunity(data: {
       duration: data.duration ?? null,
       slotsAvailable: data.slotsAvailable ?? 1,
       status: "pending",
-    })
-    .$returningId();
-  return findOpportunityById(id);
+    });
+  
+  // For MariaDB/MySQL, get the last inserted ID
+  const insertId = Number(result[0].insertId);
+  return findOpportunityById(insertId);
 }
 
 export async function updateOpportunityStatus(id: number, status: "pending" | "approved" | "rejected") {

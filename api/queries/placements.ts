@@ -60,7 +60,7 @@ export async function createPlacement(data: {
   startDate?: Date;
   endDate?: Date;
 }) {
-  const [{ id }] = await getDb()
+  const result = await getDb()
     .insert(placements)
     .values({
       applicationId: data.applicationId,
@@ -68,9 +68,9 @@ export async function createPlacement(data: {
       startDate: data.startDate ?? null,
       endDate: data.endDate ?? null,
       status: "active",
-    })
-    .$returningId();
-  return findPlacementById(id);
+    });
+  const insertId = Number(result[0].insertId);
+  return findPlacementById(insertId);
 }
 
 export async function updatePlacementStatus(id: number, status: "active" | "completed") {

@@ -29,7 +29,7 @@ export async function createEvaluation(data: {
   rating: number;
   comments?: string;
 }) {
-  const [{ id }] = await getDb()
+  const result = await getDb()
     .insert(evaluations)
     .values({
       placementId: data.placementId,
@@ -37,9 +37,9 @@ export async function createEvaluation(data: {
       evaluatorId: data.evaluatorId,
       rating: data.rating,
       comments: data.comments ?? null,
-    })
-    .$returningId();
-  return findEvaluationById(id);
+    });
+  const insertId = Number(result[0].insertId);
+  return findEvaluationById(insertId);
 }
 
 export async function deleteEvaluation(id: number) {

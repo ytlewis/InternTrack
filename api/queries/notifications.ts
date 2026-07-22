@@ -21,17 +21,17 @@ export async function createNotification(data: {
   message: string;
   type?: string;
 }) {
-  const [{ id }] = await getDb()
+  const result = await getDb()
     .insert(notifications)
     .values({
       userId: data.userId,
       message: data.message,
       type: data.type ?? "info",
       isRead: false,
-    })
-    .$returningId();
+    });
+  const insertId = Number(result[0].insertId);
   return getDb().query.notifications.findFirst({
-    where: eq(notifications.id, id),
+    where: eq(notifications.id, insertId),
   });
 }
 
