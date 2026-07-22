@@ -71,10 +71,20 @@ export async function findOpportunitiesByEmployer(employerUserId: number) {
 }
 
 export async function findOpportunityById(id: number) {
-  return getDb().query.internshipOpportunities.findFirst({
-    where: eq(internshipOpportunities.id, id),
-    with: { employer: { with: { user: true } } },
-  });
+  try {
+    console.log("[findOpportunityById] Looking for opportunity:", id);
+    
+    // Get opportunity without nested relations to avoid LATERAL join
+    const opportunity = await getDb().query.internshipOpportunities.findFirst({
+      where: eq(internshipOpportunities.id, id),
+    });
+    
+    console.log("[findOpportunityById] Found opportunity:", opportunity);
+    return opportunity;
+  } catch (err) {
+    console.error("[findOpportunityById] ERROR:", err);
+    throw err;
+  }
 }
 
 export async function createOpportunity(data: {

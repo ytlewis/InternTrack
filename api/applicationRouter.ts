@@ -98,21 +98,48 @@ export const applicationRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const studentProfile = await findStudentProfileByUserId(ctx.user.id);
-      if (!studentProfile) {
-        throw new Error("Student profile not found");
+      try {
+        console.log("[application.create] User ID:", ctx.user.id);
+        console.log("[application.create] User role:", ctx.user.role);
+        console.log("[application.create] Input:", input);
+        
+        const studentProfile = await findStudentProfileByUserId(ctx.user.id);
+        console.log("[application.create] Student profile:", studentProfile);
+        
+        if (!studentProfile) {
+          console.error("[application.create] ERROR: Student profile not found for user:", ctx.user.id);
+          throw new Error("Student profile not found. Please complete your profile setup.");
+        }
+        
+        console.log("[application.create] Looking for opportunity:", input.opportunityId);
+        const opportunity = await findOpportunityById(input.opportunityId);
+        console.log("[application.create] Opportunity:", opportunity);
+        
+        if (!opportunity) {
+          console.error("[application.create] ERROR: Opportunity not found:", input.opportunityId);
+          throw new Error("Opportunity not found");
+        }
+        
+        if (opportunity.status !== "approved") {
+          console.error("[application.create] ERROR: Opportunity not approved:", opportunity.status);
+          throw new Error("This opportunity is not available for applications");
+        }
+        
+        console.log("[application.create] Creating application with studentId:", studentProfile.id);
+        const result = await createApplication({
+          studentId: studentProfile.id,
+          opportunityId: input.opportunityId,
+          coverLetter: input.coverLetter,
+          resumeUrl: input.resumeUrl,
+          transcriptUrl: input.transcriptUrl,
+        });
+        
+        console.log("[application.create] Success! Created application:", result?.id);
+        return result;
+      } catch (err) {
+        console.error("[application.create] ERROR:", err);
+        throw err;
       }
-      const opportunity = await findOpportunityById(input.opportunityId);
-      if (!opportunity || opportunity.status !== "approved") {
-        throw new Error("Opportunity not found or not approved");
-      }
-      return createApplication({
-        studentId: studentProfile.id,
-        opportunityId: input.opportunityId,
-        coverLetter: input.coverLetter,
-        resumeUrl: input.resumeUrl,
-        transcriptUrl: input.transcriptUrl,
-      });
     }),
 
   updateStatus: authedQuery

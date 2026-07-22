@@ -109,32 +109,61 @@ export async function createApplication(data: {
   resumeUrl?: string;
   transcriptUrl?: string;
 }) {
-  const result = await getDb()
-    .insert(applications)
-    .values({
-      studentId: data.studentId,
-      opportunityId: data.opportunityId,
-      coverLetter: data.coverLetter ?? null,
-      resumeUrl: data.resumeUrl ?? null,
-      transcriptUrl: data.transcriptUrl ?? null,
-      status: "pending",
+  try {
+    console.log("[createApplication] Starting with data:", data);
+    
+    const result = await getDb()
+      .insert(applications)
+      .values({
+        studentId: data.studentId,
+        opportunityId: data.opportunityId,
+        coverLetter: data.coverLetter ?? null,
+        resumeUrl: data.resumeUrl ?? null,
+        transcriptUrl: data.transcriptUrl ?? null,
+        status: "pending",
+      });
+    
+    console.log("[createApplication] Insert result:", result);
+    
+    // For MariaDB/MySQL, get the last inserted ID
+    const insertId = Number(result[0].insertId);
+    console.log("[createApplication] Insert ID:", insertId);
+    
+    // Return simple application without nested relations to avoid LATERAL join
+    const application = await getDb().query.applications.findFirst({
+      where: eq(applications.id, insertId),
     });
-  
-  // For MariaDB/MySQL, get the last inserted ID
-  const insertId = Number(result[0].insertId);
-  
-  // Return simple application without nested relations to avoid LATERAL join
-  return getDb().query.applications.findFirst({
-    where: eq(applications.id, insertId),
-  });
+    
+    console.log("[createApplication] Retrieved application:", application);
+    return application;
+  } catch (err) {
+    console.error("[createApplication] ERROR:", err);
+    throw err;
+  }
 }
 
 export async function updateApplicationStatus(id: number, status: "pending" | "shortlisted" | "accepted" | "rejected") {
-  await getDb()
-    .update(applications)
-    .set({ status })
-    .where(eq(applications.id, id));
-  return findApplicationById(id);
+  try {
+    console.log("[updateApplicationStatus] Updating application:", id, "to status:", status);
+    
+    await getDb()
+      .update(applications)
+      .set({ status })
+      .where(eq(applications.id, id));
+    
+    console.log("[updateApplicationStatus] Update successful");
+    
+    // Return simple application without nested relations to avoid LATERAL join
+    const application = await getDb().query.applications.findFirst({
+      where: eq(applications.id, id),
+    });
+    
+    console.log("[updateApplicationStatus] Retrieved updated application:", application);
+    return application;
+  } catch (err) {
+    console.error("[updateApplicationStatus] ERROR:", err);
+    throw err;
+  }
 }
 
 export async function deleteApplication(id: number) {
