@@ -5,7 +5,7 @@ import { Session } from "@contracts/constants";
 import { getSessionCookieOptions } from "./lib/cookies";
 import { createRouter, authedQuery, publicQuery } from "./middleware";
 import { TRPCError } from "@trpc/server";
-import { createUser, findUserByEmail } from "./queries/users";
+import { createUser, findUserByEmail, createEmployerProfile } from "./queries/users";
 import { signSessionToken } from "./kimi/session";
 import { env } from "./lib/env";
 
@@ -96,32 +96,62 @@ export const authRouter = createRouter({
 
         // Try the database first; if it fails, fall back to the in-memory store
         try {
-          await createUser({
+          const dbUser = await createUser({
             unionId,
             name: input.name,
             email: input.email,
             role: userRole,
           });
+          
+          // Auto-create employer profile in database if role is employer
+          if (userRole === "employer" && dbUser?.id) {
+            try {
+              await createEmployerProfile({
+                userId: dbUser.id,
+                companyName: input.name || "My Company",
+                contactPerson: input.name || null,
+              });
+              console.log("[auth.signup] Employer profile created for user:", dbUser.id);
+            } catch (profileErr) {
+              console.warn("[auth.signup] Employer profile creation failed:", profileErr);
+              // Still create in-memory fallback
+              const employerProfile: StoredEmployerProfile = {
+                id: nextEmployerProfileId++,
+                userId: dbUser.id,
+                companyName: input.name || "My Company",
+                companyAddress: null,
+                contactPerson: input.name,
+                phone: null,
+                industry: null,
+              };
+              employerProfileStore.set(dbUser.id, employerProfile);
+            }
+          }
+          
+          // Update user with actual DB id
+          if (dbUser?.id) {
+            user.id = dbUser.id;
+          }
         } catch (dbErr) {
           console.warn("[auth.signup] createUser failed, using in-memory store:", dbErr);
+          
+          // In-memory fallback for employer profile
+          if (userRole === "employer") {
+            const employerProfile: StoredEmployerProfile = {
+              id: nextEmployerProfileId++,
+              userId: userId,
+              companyName: input.name || "My Company",
+              companyAddress: null,
+              contactPerson: input.name,
+              phone: null,
+              industry: null,
+            };
+            employerProfileStore.set(userId, employerProfile);
+          }
         }
 
         // Always cache in memory so subsequent sign-in/me lookups work even without DB
         memoryStore.set(unionId, user);
-
-        // Auto-create employer profile if role is employer
-        if (userRole === "employer") {
-          const employerProfile: StoredEmployerProfile = {
-            id: nextEmployerProfileId++,
-            userId: userId,
-            companyName: input.name || "My Company",
-            companyAddress: null,
-            contactPerson: input.name,
-            phone: null,
-            industry: null,
-          };
-          employerProfileStore.set(userId, employerProfile);
-        }
 
         const token = await signSessionToken({ unionId, clientId: env.appId });
 

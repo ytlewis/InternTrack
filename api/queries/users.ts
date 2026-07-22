@@ -48,6 +48,12 @@ export async function findUserById(id: number) {
   });
 }
 
+export async function findUserByEmail(email: string) {
+  return getDb().query.users.findFirst({
+    where: eq(users.email, email),
+  });
+}
+
 export async function findAllUsers() {
   return getDb().query.users.findMany({
     orderBy: (users, { desc }) => [desc(users.createdAt)],
@@ -126,8 +132,18 @@ export async function createStudentProfile(data: {
   phone?: string;
   institution?: string;
 }) {
-  await getDb().insert(studentProfiles).values(data);
-  return findStudentProfileByUserId(data.userId);
+  const result = await getDb().insert(studentProfiles).values({
+    userId: data.userId,
+    studentId: data.studentId,
+    program: data.program,
+    yearOfStudy: data.yearOfStudy,
+    phone: data.phone ?? null,
+    institution: data.institution ?? null,
+  });
+  const insertId = Number(result[0].insertId);
+  return getDb().query.studentProfiles.findFirst({
+    where: eq(studentProfiles.id, insertId),
+  });
 }
 
 export async function createSupervisorProfile(data: {
@@ -136,8 +152,16 @@ export async function createSupervisorProfile(data: {
   phone?: string;
   specialization?: string;
 }) {
-  await getDb().insert(supervisorProfiles).values(data);
-  return findSupervisorProfileByUserId(data.userId);
+  const result = await getDb().insert(supervisorProfiles).values({
+    userId: data.userId,
+    department: data.department,
+    phone: data.phone ?? null,
+    specialization: data.specialization ?? null,
+  });
+  const insertId = Number(result[0].insertId);
+  return getDb().query.supervisorProfiles.findFirst({
+    where: eq(supervisorProfiles.id, insertId),
+  });
 }
 
 export async function createEmployerProfile(data: {
@@ -148,8 +172,18 @@ export async function createEmployerProfile(data: {
   phone?: string;
   industry?: string;
 }) {
-  await getDb().insert(employerProfiles).values(data);
-  return findEmployerProfileByUserId(data.userId);
+  const result = await getDb().insert(employerProfiles).values({
+    userId: data.userId,
+    companyName: data.companyName,
+    companyAddress: data.companyAddress ?? null,
+    contactPerson: data.contactPerson ?? null,
+    phone: data.phone ?? null,
+    industry: data.industry ?? null,
+  });
+  const insertId = Number(result[0].insertId);
+  return getDb().query.employerProfiles.findFirst({
+    where: eq(employerProfiles.id, insertId),
+  });
 }
 
 export async function findAllStudents() {
