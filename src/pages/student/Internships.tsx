@@ -63,7 +63,10 @@ export default function StudentInternships() {
       setCoverLetter("");
       setResumeFile(null);
       setResumeUrl("");
-      utils.application.listByStudent.invalidate();
+      // Don't wait for cache invalidation
+      setTimeout(() => {
+        utils.application.listByStudent.invalidate();
+      }, 0);
     },
     onError: (err) => {
       toast.error(err.message || "Failed to submit application");
